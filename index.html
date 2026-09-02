@@ -204,6 +204,10 @@
   .illus-sm{max-width:240px;}
   .illus-lg{max-width:580px;}
   .illus-caption{text-align:center;font-size:.8rem;color:var(--muted);margin:6px 0 4px;}
+  .img{display:block;max-width:100%;height:auto;border:1px solid var(--border);border-radius:12px;margin:10px auto;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .img-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:12px 0;}
+  .img-pair figure{margin:0;}
+  .img-pair img{width:100%;height:auto;border:1px solid var(--border);border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
   .hero .illus{margin-top:24px;max-width:300px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.18));}
   .repo-link{display:inline-flex;align-items:center;gap:8px;}
   @media(max-width:640px){
@@ -920,6 +924,101 @@ free = acos((135² + 157² − 87.7²) / (2×135×157))
         </div>
         <div class="note tip"><span class="label">🎯 คำตอบ:</span> θ = <b>(43.2°, 99.3°, −38.7°)</b> — ตรวจสอบย้อนกลับด้วย FK ได้ผลลัพธ์ (150.0, 300.0, 99.9) ตรงกับโจทย์ ✓</div>
       </div>
+    </div>
+
+    <!-- ============ ROBOTSHOP REFERENCE ============ -->
+    <h3>📖 ตัวอย่างจากแหล่งอ้างอิง: Forward Kinematics ด้วยตรีโกณมิติ</h3>
+    <div class="note info">
+      <span class="label">ℹ️ ที่มา:</span>
+      บทความ <b>“Forward Kinematics Calculation for Robotic Arm”</b> โดย Antonius Ringlayer
+      โพสต์บน RobotShop Community (2018) —
+      <a href="https://community.robotshop.com/forum/t/forward-kinematics-calculation-for-robotic-arm/13650" target="_blank" rel="noopener">ลิงก์บทความต้นฉบับ</a>
+      · วิธีที่ใช้คือ <b>ตรีโกณมิติอย่างง่าย</b> (อีก 2 วิธีที่นิยมคือ Denavit–Hartenberg Parameters และ Screw Theory)
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h4>📐 ส่วนที่ 1 — 2D FK สำหรับแขนกล 1 DOF</h4>
+        <p>หลักการ: <b>Forward Kinematics (FK)</b> คือการหาตำแหน่งปลายแขนเมื่อรู้มุมข้อต่อ
+        — <b>Inverse Kinematics (IK)</b> คือการหามุมข้อต่อเมื่อรู้ตำแหน่งปลายแขน</p>
+        <p>ตัวอย่าง: ก้านเดียว <b>l = 10 cm</b>, มุม <b>θ = 45°</b></p>
+        <pre><code>cos θ = x / l   →   x = cos 45° × 10 = 7.07 cm
+sin θ = y / l   →   y = sin 45° × 10 = 7.07 cm</code></pre>
+        <p>ตำแหน่งปลายแขน = <b>p(7.07, 7.07) cm</b> — สังเกตว่ามุม 45° ทำให้ x = y</p>
+        <p style="font-size:.9rem;">โค้ด Python (จากบทความต้นฉบับ):</p>
+        <pre><code>import math
+def solve_1dof_fk(link, degree):
+    x = math.cos(math.radians(degree)) * link
+    y = math.sin(math.radians(degree)) * link
+    return x, y
+
+x, y = solve_1dof_fk(10, 45)
+print("x =", x, " y =", y)
+# ผลลัพธ์: x = 7.07  y = 7.07</code></pre>
+        <div class="note tip"><span class="label">💡 ข้อสังเกต:</span>
+        ตรีโกณมิติพื้นฐานนี้คือหัวใจของ FK — แขนกล 3 แกนก็แค่แยกคิดทีละมุมแล้วรวมกัน</div>
+      </div>
+
+      <div class="card">
+        <h4>📐 ส่วนที่ 2 — 3D FK สำหรับแขนกล 3 DOF</h4>
+        <p>โจทย์ต้นฉบับกำหนดค่าให้: <code>l1 = l2 = 10 cm</code>, <code>d2 = 7 cm</code>,
+        <code>θ1 = 60°</code>, <code>θ2 = 30°</code>, <code>θ3 = 140°</code></p>
+        <img class="img" src="images/907c8ae33d4a8c7a7aee256a201c998ee641d9f5.jpeg" alt="ภาพรวมแขนกล 3 DOF มุมมองด้านข้างและด้านบน">
+        <p class="illus-caption">รูป: แขนกล 3 DOF — ซ้าย: TOP VIEW (θ1), ขวา: SIDE VIEW (θ2, θ3, z) พร้อมค่าที่กำหนดให้</p>
+        <p>จากภาพ <b>Side View</b> เราจะหาความสูง <b>z</b> ก่อน แล้วค่อยหาจาก <b>Top View</b> เอาระยะเอื้อมแนวนอน <b>d1</b> ไปหาพิกัด x, y</p>
+        <img class="img" src="images/8141d024a019548708de7663296c021057168372.jpeg" alt="มุมมองด้านข้างแขนกล 3 DOF พื้นฐาน">
+        <p class="illus-caption">รูป: SIDE VIEW — BASE, ก้าน L1/L2, มุม θ2/θ3, ความสูง z</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🧮 ขั้นตอนการคำนวณ 3D FK (ทีละขั้น)</h4>
+      <img class="img" src="images/55945e6016b35df8dc4138f9b824d474effb78a4.jpeg" alt="มุมมองด้านข้างพร้อมป้ายทุกค่า">
+      <p class="illus-caption">รูป: SIDE VIEW แบบเต็มป้าย — d1…d6, θ4, θ5, 90°, z (ใช้ในขั้นตอนด้านล่าง)</p>
+      <div class="timeline">
+        <div class="step">
+          <h4>ขั้นที่ 1 — หา d3 (องค์ประกอบแนวตั้งของ L1)</h4>
+          <pre><code>sin θ2 = d3 / l1
+   d3 = sin 30° × 10 = 5.0 cm</code></pre>
+        </div>
+        <div class="step">
+          <h4>ขั้นที่ 2 — หามุม θ4 และ θ5</h4>
+          <pre><code>θ4 = 180° − (θ2 + 90°) = 180° − (30° + 90°) = 60°
+θ5 = θ3 − θ4 = 140° − 60° = 80°</code></pre>
+        </div>
+        <div class="step">
+          <h4>ขั้นที่ 3 — หา d6 แล้วคำนวณความสูง z</h4>
+          <pre><code>cos θ5 = d6 / l2   →   d6 = cos 80° × 10 = 1.74 cm
+   z = d2 + d3 − d6 = 7 + 5.0 − 1.74 = 10.26 cm</code></pre>
+        </div>
+        <div class="step">
+          <h4>ขั้นที่ 4 — หา d4, d5 และระยะเอื้อมแนวนอน d1</h4>
+          <pre><code>d4 = cos θ2 × l1 = cos 30° × 10 = 8.66 cm
+   d5 = sin θ5 × l2 = sin 80° × 10 = 9.85 cm
+   d1 = d4 + d5 = 8.66 + 9.85 = 18.51 cm</code></pre>
+        </div>
+        <div class="step">
+          <h4>ขั้นที่ 5 — หา x และ y จาก TOP VIEW</h4>
+          <div class="img-pair">
+            <figure>
+              <img src="images/321ef82f65c4c9556cbf0fad09cc5a39315ecc17.jpeg" alt="มุมมองด้านบนแขนกล">
+              <figcaption class="illus-caption">TOP VIEW — θ1 หมุนรอบฐาน</figcaption>
+            </figure>
+            <figure>
+              <img src="images/499b7a99a4ddfeef4075d6ce220ac743dbb3e941.jpeg" alt="มุมมองด้านบนพร้อม d1">
+              <figcaption class="illus-caption">TOP VIEW — d1 = 18.51 cm</figcaption>
+            </figure>
+          </div>
+          <pre><code>x = cos θ1 × d1 = cos 60° × 18.51 = 9.26 cm
+   y = sin θ1 × d1 = sin 60° × 18.51 = 16.03 cm</code></pre>
+        </div>
+      </div>
+      <div class="note tip"><span class="label">🎯 คำตอบ:</span>
+      ตำแหน่งปลายแขน <b>p(x, y, z) = p(9.26, 16.03, 10.26) cm</b></div>
+      <div class="note warn"><span class="label">⚠️ หมายเหตุเชิงวิศวกร:</span>
+      ในบทความต้นฉบับมีจุดที่คำนวณคลาดเคลื่อนเล็กน้อย (เช่น d3 ≈ 4.9 และ z = 13.6)
+      — ด้านบนเป็นการคำนวณที่ถูกต้อง (d3 = sin 30°×10 = 5.0, z = 10.26)
+      สอนให้ผู้เรียน<b>ตรวจทานตัวเลขเสมอ</b> แม้มาจากแหล่งอ้างอิงก็ตาม</div>
     </div>
   </section>
 
