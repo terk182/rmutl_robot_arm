@@ -1020,6 +1020,113 @@ print("x =", x, " y =", y)
       — ด้านบนเป็นการคำนวณที่ถูกต้อง (d3 = sin 30°×10 = 5.0, z = 10.26)
       สอนให้ผู้เรียน<b>ตรวจทานตัวเลขเสมอ</b> แม้มาจากแหล่งอ้างอิงก็ตาม</div>
     </div>
+
+    <!-- ============ ROBOHUB REFERENCE ============ -->
+    <h3>📖 ตัวอย่างจากแหล่งอ้างอิง 2: Inverse Kinematics แบบเรขาคณิต (Robohub)</h3>
+    <div class="note info">
+      <span class="label">ℹ️ ที่มา:</span>
+      บทความ <b>“Robotics, maths, python: A fledgling computer scientist’s guide to inverse kinematics”</b>
+      โดย Alistair Wick (University of Bristol, 2017) —
+      <a href="https://robohub.org/robotics-maths-python-a-fledgling-computer-scientists-guide-to-inverse-kinematics/" target="_blank" rel="noopener">ลิงก์บทความ</a>
+      · โค้ดเต็มและไฟล์ออกแบบ: <a href="https://github.com/AliShug/EvoArm" target="_blank" rel="noopener">github.com/AliShug/EvoArm</a>
+    </div>
+
+    <div class="card">
+      <h4>🤖 แขนกลตัวอย่าง (3 DOF) และวิธีคิด IK</h4>
+      <img class="img" src="images/robo_arm_illustration.png" alt="โครงสร้างแขนกล 3 DOF พร้อมชื่อชิ้นส่วน">
+      <p class="illus-caption">รูป: โครงสร้างแขน — Base, Shoulder, Elbow, Wrist, End-Effector พร้อมแกน x/y/z</p>
+      <p>แขนตัวอย่างมีอิสระ 3 แกน (3 DOF): <b>Swing</b> (หมุนทั้งแขนรอบฐาน),
+      <b>Main</b> (เลื่อนข้อศอกเข้า–ออก), <b>Actuator</b> (เลื่อนปลายแขนขึ้น–ลง)
+      — ข้อดีของแขน 3 DOF คือ <b>ทุกตำแหน่งของปลายแขนมีท่าคำตอบเดียว (unique solution)</b>
+      ทำให้แก้ IK แบบวิเคราะห์ (เรขาคณิต) ได้โดยไม่ต้องใช้การคำนวณเชิงตัวเลขที่ซับซ้อน</p>
+      <div class="img-pair">
+        <figure>
+          <img src="images/robo_swing.gif" alt="การหมุน Swing">
+          <figcaption class="illus-caption">Swing — หมุนรอบฐาน</figcaption>
+        </figure>
+        <figure>
+          <img src="images/robo_main.gif" alt="การขยับ Main">
+          <figcaption class="illus-caption">Main — ข้อศอกเข้า–ออก</figcaption>
+        </figure>
+        <figure>
+          <img src="images/robo_actuator.gif" alt="การขยับ Actuator">
+          <figcaption class="illus-caption">Actuator — ปลายแขนขึ้น–ลง</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🧭 ขั้นตอนที่ 1 — Swing IK (มุมมองจากด้านบน)</h4>
+      <img class="img" src="images/robo_top_ik.png" alt="มุมมองด้านบน Swing IK แบบกึ่งกลางและเยื้องศูนย์">
+      <p class="illus-caption">รูป: “Easy” = จุดหมุนอยู่กึ่งกลาง (ใช้ตรีโกณมิติตรง ๆ) · “Less easy” = จุดหมุนเยื้องศูนย์ (ต้องใช้การค้นหา)</p>
+      <p>กรณี<b>กึ่งกลาง</b>: หามุมหมุนง่าย ๆ ด้วย <code>atan2</code> แต่แขนจริงมี<b>ระนาบการทำงานเยื้องจากแกนหมุน</b>
+      (ดูภาพขวา) ทำให้ถ้าใช้ตรีโกณมิติตรง ๆ แขนจะชี้เฉไปด้านข้าง</p>
+      <p>วิธีที่ผู้เขียนใช้: <b>Binary Search (วิธีแบ่งครึ่ง / Bisection Method)</b> — กำหนดขอบบน–ล่างของมุม
+      ตรวจจุดกึ่งกลางว่ามาก/น้อยกว่าเป้าหมาย แล้วลดช่วงลงครึ่งหนึ่งทุกครั้ง
+      <b>3–5 รอบได้ความแม่นยำต่ำกว่า 0.3°</b> (เพียงพอสำหรับเซอร์โว)</p>
+      <pre><code>import numpy as np
+
+def normalize(v):
+    return v / np.linalg.norm(v)
+
+def signed_angle(A, B):
+    """มุมมีเครื่องหมาย: บวก = A หมุนตามเข็มนาฬิกาจาก B (ใช้ dot product)"""
+    A, B = normalize(A), normalize(B)
+    perp = np.array([-B[1], B[0]])          # เวกเตอร์ตั้งฉากกับ B ไปทางตามเข็มนาฬิกา
+    return np.rad2deg(np.arctan2(np.dot(A, perp), np.dot(A, B)))
+
+# เริ่มต้นจากมุมคร่าว ๆ (naive) แล้วค้นหาแบบแบ่งครึ่ง
+start_theta = np.rad2deg(np.arctan2(goal[1], goal[0]))   # atan2 แก้ quadrant ให้ถูกต้อง
+lo, hi = start_theta - 60, start_theta + 60               # ขอบเขตเริ่มต้น
+for _ in range(8):                                        # 8 รอบ = แม่นยำมาก
+    mid = (lo + hi) / 2
+    err = signed_angle(arm_direction(mid), goal - shoulder(mid))
+    if err > 0: lo = mid      # มากเกินไป -> ใช้ mid เป็นขอบบน
+    else:       hi = mid      # น้อยเกินไป -> ใช้ mid เป็นขอบล่าง
+swing = (lo + hi) / 2</code></pre>
+      <p>ผลลัพธ์ที่ได้จากขั้นนี้ด้วย: <b>ระยะรัศมี</b>จากข้อต่อ Shoulder ถึงปลายแขน (goal_radial) — ใช้ต่อในขั้นตอนที่ 2</p>
+      <pre><code>goal_radial = np.linalg.norm(goal - shoulder(swing))   # ระยะ 2D บนระนาบการทำงาน</code></pre>
+    </div>
+
+    <div class="card">
+      <h4>🔺 ขั้นตอนที่ 2 — Plane IK (มุมมองด้านข้าง) หาตำแหน่งข้อศอก</h4>
+      <img class="img" src="images/robo_side_ik.png" alt="มุมมองด้านข้าง การหาข้อศอกด้วยวงกลมตัดวงกลม">
+      <p class="illus-caption">รูป: วงกลม 2 วง (ศูนย์กลางที่ Shoulder รัศมี 148mm = Main arm · ศูนย์กลางที่ Wrist รัศมี = Forearm) — ข้อศอกอยู่ที่จุดตัดบน</p>
+      <p>เปลี่ยนมาใช้พิกัด 2D ใน<b>ระนาบการทำงาน</b> (แกน x = ระยะ radial, แกน y = ความสูง) —
+      main arm กับ forearm สร้าง<b>สามเหลี่ยม</b>โดยมีข้อศอกอยู่ที่ยอด
+      เนื่องจากข้อศอกอยู่ห่างจาก Shoulder = ความยาว main arm และห่างจาก Wrist = ความยาว forearm
+      เราจึงวาด<b>วงกลม 2 วง</b> แล้วหาจุดตัด — ข้อศอกคือ<b>จุดตัดบน (ค่า y มากสุด)</b></p>
+      <pre><code>def circle_intersection(c1, r1, c2, r2):
+    """จุดตัดของวงกลม 2 วง — คืนจุดบนสุด (y มากสุด) หรือ None ถ้าหาคำตอบไม่ได้"""
+    d = np.linalg.norm(c2 - c1)
+    if d > r1 + r2:        return None   # วงแยกกัน -> ระยะเอื้อมไม่ถึง
+    if d &lt; abs(r1 - r2):   return None   # วงหนึ่งกลืนอีกวง -> โครงสร้างเป็นไปไม่ได้
+    a = (r1*r1 - r2*r2 + d*d) / (2*d)
+    h = np.sqrt(r1*r1 - a*a)
+    p = c1 + a * (c2 - c1) / d
+    u = np.array([-(c2[1]-c1[1]), c2[0]-c1[0]]) / d   # ทิศตั้งฉาก
+    p1, p2 = p + h*u, p - h*u
+    return max(p1, p2, key=lambda v: v[1])            # เลือกข้อศอกตำแหน่งบน
+
+elbow = circle_intersection(shoulder, MAIN_LEN, wrist_goal, FOREARM_LEN)</code></pre>
+      <div class="note info"><span class="label">ℹ️ กรณีที่ไม่มีคำตอบ:</span>
+      ถ้าวงกลมไม่แตะกัน (ระยะเอื้อมไม่ถึง) หรือวงหนึ่งอยู่ข้างในอีกวง
+      → แสดงว่าเป้าหมายนั้น<b>อยู่นอกขอบเขตการทำงาน</b>ของแขน (Out of Workspace) — ต้องย้ายเป้าหมายใหม่</div>
+    </div>
+
+    <div class="card">
+      <h4>✅ สรุปแนวคิดของบทความนี้</h4>
+      <ul>
+        <li>ได้ <b>มุม Swing</b> (ขั้นตอนที่ 1) + <b>ตำแหน่งข้อศอก</b> (ขั้นตอนที่ 2) = ท่าแขนที่สมบูรณ์</li>
+        <li>ถ้าต้องการสามารถแปลงกลับเป็นพิกัด 3D ได้โดยใช้มุม swing + ระนาบการทำงาน</li>
+        <li>แขนจริงอาจมี<b>จุดหมุนเยื้องศูนย์</b> — การค้นหาแบบ Binary Search ช่วยแก้ได้โดยไม่ต้องนั่งคิดเรขาคณิตยาก ๆ</li>
+      </ul>
+      <div class="note tip"><span class="label">💡 เปรียบเทียบกับโปรเจกต์ของเรา:</span>
+      แขนของค่ายนี้ (<code>terk_arm_esp32_v1</code>) ใช้สูตรตรีโกณมิติ IK ตรง ๆ ในหัวข้อ Kinematics ด้านบน
+      ส่วนบทความนี้เสนอ<b>อีกแนวคิดหนึ่ง</b> — การค้นหาแบบแบ่งครึ่ง + เรขาคณิตวงกลม
+      ซึ่งเหมาะกับแขนที่โครงสร้างมีจุดหมุนเยื้องศูนย์ และใช้โค้ด Python + NumPy
+      (<code>pip install numpy</code>) — สอนให้เห็นว่าการแก้ปัญหาเดียวกันมีได้หลายวิธี</div>
+    </div>
   </section>
 
   <!-- ================= HARDWARE ================= -->
