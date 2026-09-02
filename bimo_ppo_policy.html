@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PPO Policy Guide — Bimo &amp; แขนกล 3DOF</title>
+  <style>
+    :root {
+      --accent: #2f6df6;
+      --accent-dark: #1b4fc0;
+      --bg: #0f1117;
+      --card: #171a23;
+      --card-2: #1d2130;
+      --text: #e6e9f0;
+      --muted: #9aa3b2;
+      --border: #2a2f3d;
+      --ok: #2ecc9b;
+      --warn: #f5b94e;
+      --bad: #e86a6a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Noto Sans Thai", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+    header {
+      background: linear-gradient(135deg, #1b4fc0 0%, #2f6df6 60%, #7aa2ff 100%);
+      padding: 40px 28px;
+      color: #fff;
+    }
+    header .inner { max-width: 1000px; margin: 0 auto; }
+    header h1 { margin: 0 0 8px; font-size: 1.9rem; }
+    header p { margin: 4px 0; opacity: .95; }
+    .badge {
+      display: inline-block; background: rgba(255,255,255,.2);
+      padding: 2px 10px; border-radius: 999px; font-size: .8rem; margin-top: 10px;
+    }
+    main { max-width: 1000px; margin: 0 auto; padding: 28px 20px 60px; }
+    nav.toc {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 18px 22px; margin-bottom: 28px;
+    }
+    nav.toc b { color: var(--accent); }
+    nav.toc ol { margin: 8px 0 0; padding-left: 20px; }
+    nav.toc a { color: var(--accent); text-decoration: none; }
+    nav.toc a:hover { text-decoration: underline; }
+    section {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 24px 26px; margin-bottom: 26px;
+    }
+    h2 {
+      margin-top: 0; font-size: 1.4rem; color: #fff;
+      border-bottom: 2px solid var(--accent); padding-bottom: 8px;
+    }
+    h3 { color: var(--accent); margin: 22px 0 8px; font-size: 1.1rem; }
+    h4 { color: #bcd0ff; margin: 16px 0 6px; }
+    code, .mono {
+      font-family: "Cascadia Code", "Consolas", monospace;
+      background: var(--card-2); padding: 1px 6px; border-radius: 6px; font-size: .9em;
+    }
+    pre {
+      background: var(--card-2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; overflow-x: auto; font-size: .85rem;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: .92rem; }
+    th, td { text-align: left; padding: 9px 12px; border: 1px solid var(--border); }
+    th { background: var(--card-2); color: var(--accent); }
+    tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+    .tag { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: .75rem; font-weight: 600; }
+    .tag.actor { background: #1f3a6e; color: #9cc0ff; }
+    .tag.critic { background: #2e4a1f; color: #b7e49b; }
+    .tag.alg { background: #4a2e1f; color: #ffcf9c; }
+    .tag.distill { background: #3a2e6e; color: #c9b7ff; }
+    .note {
+      border-left: 4px solid var(--warn); background: rgba(245,185,78,.08);
+      padding: 12px 16px; border-radius: 8px; margin: 14px 0;
+    }
+    .note.ok { border-left-color: var(--ok); background: rgba(46,204,155,.08); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .mini {
+      background: var(--card-2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .mini b { display: block; color: var(--accent); margin-bottom: 6px; }
+    footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 24px; }
+    .mermaid { background: var(--card-2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .net {
+      width: 100%; height: auto; background: var(--card-2);
+      border: 1px solid var(--border); border-radius: 12px; margin: 12px 0;
+    }
+    .net-caption { text-align: center; color: var(--muted); font-size: .82rem; margin: -4px 0 8px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <h1>PPO Policy &amp; Configuration Guide — Bimo + แขนกล 3DOF</h1>
+    <p>คู่มืออธิบายอัลกอริทึม PPO และการตั้งค่า policy แบบละเอียด — ใช้ได้ทั้งหุ่นเดิน Bimo และแขนกล 3DOF (terk_arm_esp32_v1)</p>
+    <span class="badge">Bimo (obs=11 · act=8) · แขนกล 3DOF (obs=7 · act=4) · Isaac Lab / MuJoCo</span>
+  </div>
+</header>
+
+<main>
+
+<nav class="toc">
+  <b>สารบัญ</b>
+  <ol>
+    <li><a href="#ppo">PPO คืออะไร (Proximal Policy Optimization)</a></li>
+    <li><a href="#arch">สถาปัตยกรรม Actor–Critic (Bimo + แขนกล)</a></li>
+    <li><a href="#runner">Runner Config (การรัน train)</a></li>
+    <li><a href="#policy">Policy Config (โครงข่าย)</a></li>
+    <li><a href="#algorithm">Algorithm Config (PPO hyperparameters)</a></li>
+    <li><a href="#obs">Observation &amp; Action Space</a></li>
+    <li><a href="#distill">Distillation Policy (สำหรับ RP2040)</a></li>
+    <li><a href="#deploy">จาก train → export → ใช้งานจริง</a></li>
+    <li><a href="#arm">แขนกล 3DOF — ปรับใช้กับโปรเจกต์ของเรา</a></li>
+    <li><a href="#gal">พารามิเตอร์มีผลต่อพฤติกรรมยังไง</a></li>
+  </ol>
+</nav>
+
+<!-- ============ PPO ============ -->
+<section id="ppo">
+  <h2>1. PPO คืออะไร</h2>
+  <p>
+    <b>PPO (Proximal Policy Optimization)</b> เป็นอัลกอริทึม Reinforcement Learning แบบ <b>on-policy</b>
+    ที่พัฒนาโดย OpenAI ใช้สำหรับ train policy ให้เดิน/ทรงตัวได้โดยไม่ต้องมีตัวอย่างจากมนุษย์
+    จุดเด่นคือ <b>เสถียร ง่าย และปรับได้ไม่ยาก</b> จึงเป็น default ของงาน robot locomotion ใน Isaac Lab
+  </p>
+
+  <h3>หลักการทำงานโดยสรุป</h3>
+  <ol>
+    <li><b>Collect (สัมผัสประสบการณ์)</b> — ให้ policy ปัจจุบันเดินใน simulation เก็บข้อมูล (state, action, reward) ไปเรื่อยๆ</li>
+    <li><b>Learn (อัปเดต)</b> — เอาข้อมูลที่เก็บมา train หลายๆ epoch โดยใช้ PPO clipping เพื่อไม่ให้ policy เปลี่ยนเร็วเกินไป</li>
+    <li><b>Repeat</b> — วนซ้ำ เก็บข้อมูลใหม่ด้วย policy ที่ดีขึ้น</li>
+  </ol>
+
+  <div class="mermaid">
+    <pre>
+Policy state → ตัดสินใจ action → ลง simulation → ได้ reward
+        ▲                                         │
+        └────────── อัปเดต policy (PPO clip) ←──────┘
+    </pre>
+  </div>
+
+  <h3>ทำไมต้องมี "clipping" ?</h3>
+  <p>
+    PPO จำกัดขนาดของการอัปเดต policy ในแต่ละครั้งด้วย <code>clip_param</code> (ที่นี่ = <b>0.2</b>)
+    โดยคำนวณ <b>probability ratio</b> ระหว่าง policy ใหม่กับเก่า:
+  </p>
+  <pre>ratio = π_new(a|s) / π_old(a|s)</pre>
+  <p>แล้ว clip ratio ให้อยู่ในช่วง <code>[1-clip_param, 1+clip_param]</code> ก่อนคูณกับ advantage
+  ทำให้ policy ไม่ "กระโดด" ไปไกลจนพังในทีเดียว → แต่ละ iteration เปลี่ยนทีละนิด เสถียร</p>
+
+  <div class="note">
+    <b>คำศัพท์สำคัญที่เห็นใน log ของ train:</b><br/>
+    <code>Mean reward</code> = ค่าเฉลี่ยรางวัลต่อ episode · <code>Mean episode length</code> = จำนวน step ที่หุ่นล้มช้า
+    · <code>Mean action noise std</code> = ความสุ่มของ action (ยิ่ง train ยิ่งลดลง) ·
+    <code>Mean value loss</code> = ความคลาดเคลื่อนของ critic ในการประมาณ value
+  </div>
+</section>
+
+<!-- ============ ARCH ============ -->
+<section id="arch">
+  <h2>2. สถาปัตยกรรม Actor–Critic</h2>
+  <p>ทั้งหุ่นเดิน Bimo และแขนกล 3DOF ใช้โครงสร้าง <b>Actor–Critic</b> แบบ standard ของ rsl_rl เหมือนกัน:</p>
+
+  <div class="grid">
+    <div class="mini">
+      <b>Actor (Policy)</b>
+      ทำหน้าที่ <b>ตัดสินใจ</b> รับ observation → คืนค่า mean ของ action (normal distribution)
+      <br/><span class="tag actor">MLP [256,128,64] · ELU</span>
+    </div>
+    <div class="mini">
+      <b>Critic (Value)</b>
+      ทำหน้าที่ <b>ประเมิน</b> รับ observation → คืนค่า value (สถานะนี้ดีแค่ไหน) ใช้คำนวณ advantage
+      <br/><span class="tag critic">MLP [256,128,64]</span>
+    </div>
+    <div class="mini">
+      <b>Policy Distribution</b>
+      Action ออกมาเป็น <b>Gaussian</b> (mean จาก actor, std จาก <code>init_noise_std</code>)
+      ระหว่าง train จะสุ่มตาม distribution นี้เพื่อสำรวจ
+    </div>
+  </div>
+
+  <svg class="net" viewBox="0 0 800 430" role="img" aria-label="แผนภาพโครงข่าย Actor-Critic ของ Bimo">
+    <defs>
+      <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#2f6df6"/>
+      </marker>
+      <marker id="arrN" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#c9b7ff"/>
+      </marker>
+    </defs>
+
+    <!-- ===== ACTOR branch ===== -->
+    <text x="140" y="42" fill="#9cc0ff" font-size="14" font-weight="700">ACTOR · Policy  (ตัดสินใจ)</text>
+    <rect x="140" y="55" width="85" height="150" rx="12" fill="#1d2130" stroke="#2f6df6" stroke-width="2"/>
+    <text x="182" y="130" fill="#fff" font-size="15" font-weight="700" text-anchor="middle">256</text>
+    <text x="182" y="147" fill="#9aa3b2" font-size="10" text-anchor="middle">ELU</text>
+    <rect x="265" y="75" width="75" height="130" rx="12" fill="#1d2130" stroke="#2f6df6" stroke-width="2"/>
+    <text x="302" y="143" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">128</text>
+    <rect x="380" y="95" width="65" height="110" rx="12" fill="#1d2130" stroke="#2f6df6" stroke-width="2"/>
+    <text x="412" y="153" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">64</text>
+
+    <rect x="500" y="95" width="85" height="70" rx="12" fill="#2e4a1f" stroke="#2ecc9b" stroke-width="2"/>
+    <text x="542" y="125" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">mean</text>
+    <text x="542" y="141" fill="#b7e49b" font-size="11" text-anchor="middle">(8)</text>
+
+    <circle cx="640" cy="130" r="18" fill="#3a2e6e" stroke="#c9b7ff" stroke-width="2"/>
+    <text x="640" y="135" fill="#c9b7ff" font-size="15" font-weight="700" text-anchor="middle">σ</text>
+
+    <rect x="695" y="95" width="85" height="70" rx="12" fill="#1f3a6e" stroke="#2f6df6" stroke-width="2"/>
+    <text x="737" y="125" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">action</text>
+    <text x="737" y="141" fill="#9cc0ff" font-size="11" text-anchor="middle">(8) delta</text>
+
+    <!-- ===== CRITIC branch ===== -->
+    <text x="140" y="268" fill="#b7e49b" font-size="14" font-weight="700">CRITIC · Value  (ประเมิน)</text>
+    <rect x="140" y="285" width="85" height="85" rx="12" fill="#1d2130" stroke="#2ecc9b" stroke-width="2"/>
+    <text x="182" y="332" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">256</text>
+    <rect x="265" y="300" width="75" height="70" rx="12" fill="#1d2130" stroke="#2ecc9b" stroke-width="2"/>
+    <text x="302" y="340" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">128</text>
+    <rect x="380" y="310" width="65" height="60" rx="12" fill="#1d2130" stroke="#2ecc9b" stroke-width="2"/>
+    <text x="412" y="345" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">64</text>
+    <rect x="500" y="305" width="85" height="60" rx="12" fill="#2e4a1f" stroke="#2ecc9b" stroke-width="2"/>
+    <text x="542" y="330" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">value</text>
+    <text x="542" y="346" fill="#b7e49b" font-size="11" text-anchor="middle">(1)</text>
+
+    <!-- ===== obs input ===== -->
+    <rect x="15" y="155" width="85" height="140" rx="12" fill="#1f3a6e" stroke="#2f6df6" stroke-width="2"/>
+    <text x="57" y="215" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">obs</text>
+    <text x="57" y="232" fill="#9cc0ff" font-size="12" text-anchor="middle">(11)</text>
+    <text x="57" y="262" fill="#9aa3b2" font-size="9" text-anchor="middle">normalize</text>
+
+    <!-- ===== arrows actor ===== -->
+    <g stroke="#2f6df6" stroke-width="2.5" fill="none" marker-end="url(#arrA)">
+      <line x1="100" y1="195" x2="136" y2="140"/>
+      <line x1="225" y1="135" x2="261" y2="140"/>
+      <line x1="340" y1="145" x2="376" y2="150"/>
+      <line x1="445" y1="150" x2="496" y2="130"/>
+      <line x1="585" y1="130" x2="618" y2="130"/>
+      <line x1="658" y1="130" x2="691" y2="130"/>
+    </g>
+    <!-- ===== arrows critic ===== -->
+    <g stroke="#2ecc9b" stroke-width="2.5" fill="none">
+      <line x1="100" y1="225" x2="136" y2="320" stroke="#2ecc9b"/>
+      <polygon points="136,315 144,320 136,325" fill="#2ecc9b"/>
+      <line x1="225" y1="325" x2="261" y2="330"/>
+      <polygon points="261,325 269,330 261,335" fill="#2ecc9b"/>
+      <line x1="340" y1="335" x2="376" y2="338"/>
+      <polygon points="376,333 384,338 376,343" fill="#2ecc9b"/>
+      <line x1="445" y1="340" x2="496" y2="335"/>
+      <polygon points="496,330 504,335 496,340" fill="#2ecc9b"/>
+    </g>
+
+    <text x="640" y="172" fill="#c9b7ff" font-size="10" text-anchor="middle">Gaussian noise</text>
+    <text x="640" y="185" fill="#9aa3b2" font-size="9" text-anchor="middle">(init_noise_std=1.0)</text>
+    <text x="542" y="210" fill="#9aa3b2" font-size="9" text-anchor="middle">sampled → exploration</text>
+  </svg>
+  <p class="net-caption">รูป: โครงข่าย Actor–Critic ของ Bimo — obs 11 ค่า เข้า Actor (ตัดสินใจ) และ Critic (ประเมินค่า) แยกกัน</p>
+
+  <div class="note ok">
+    <b>ทำไม Actor กับ Critic ใช้โครงสร้างเดียวกัน? </b><br/>
+    ที่นี่ตั้ง hidden dims ให้เท่ากัน <code>[256,128,64]</code> เพื่อให้เรียนรู้ความซับซ้อนของงานได้เท่ากัน
+    แต่ Critic ไม่ได้ต่อ obs normalization (<code>critic_obs_normalization=False</code>) เพราะ critic เรียนรู้ value
+    ที่เป็นค่าสัมบูรณ์ ไม่ต้อง normalize เหมือน policy
+  </div>
+</section>
+
+<!-- ============ RUNNER ============ -->
+<section id="runner">
+  <h2>3. Runner Config — ควบคุมการรัน train</h2>
+  <p>มาจาก <code>BimoPPORunnerCfg(RslRlOnPolicyRunnerCfg)</code> ในไฟล์ <code>agents/rsl_rl.py</code></p>
+  <table>
+    <tr><th>พารามิเตอร์</th><th>ค่า</th><th>ความหมาย</th></tr>
+    <tr><td><code>num_steps_per_env</code></td><td>16</td><td>จำนวน step ที่เก็บข้อมูลต่อ env ต่อ iteration (rollout)</td></tr>
+    <tr><td><code>max_iterations</code></td><td>500</td><td>จำนวนครั้งที่อัปเดต policy (1 iteration = เก็บ + เรียนรู้)</td></tr>
+    <tr><td><code>save_interval</code></td><td>50</td><td>ทุก 50 iteration จะ save checkpoint <code>model_*.pt</code></td></tr>
+    <tr><td><code>experiment_name</code></td><td><code>bimo_ppo_rsrl</code></td><td>ชื่อโฟลเดอร์ log/checkpoint (อยู่ใน <code>logs/rsl_rl/</code>)</td></tr>
+    <tr><td><code>empirical_normalization</code></td><td>True</td><td>normalize observation ด้วยค่า mean/std ที่เก็บจากข้อมูลจริง (robust กับ skala ต่างกัน)</td></tr>
+    <tr><td><code>fp16</code></td><td>True</td><td>ใช้ mixed precision (half) ช่วยลด memory/เร็วขึ้น จำเป็นสำหรับ export ไป RKNN</td></tr>
+    <tr><td><code>obs_groups</code></td><td><code>{"policy":["policy"],"critic":["policy"]}</code></td><td>บอกว่า observation กลุ่มไหนใช้กับ actor/critic (ทั้งคู่ใช้ "policy")</td></tr>
+  </table>
+
+  <div class="note">
+    <b>หมายเหตุ <code>max_iterations=500</code></b><br/>
+    งานเดินของ Bimo มัก converge ได้ภายใน ~500 iterations (ประมาณ 10–15 นาทีบน GPU ขนาดกลาง)
+    ถ้า reward ยังไม่นิ่ง อาจเพิ่มเป็น 1000 ได้
+  </div>
+</section>
+
+<!-- ============ POLICY ============ -->
+<section id="policy">
+  <h2>4. Policy Config — โครงข่าย</h2>
+  <p>มาจาก <code>policy = RslRlPpoActorCriticCfg(...)</code></p>
+  <table>
+    <tr><th>พารามิเตอร์</th><th>ค่า</th><th>ความหมาย</th></tr>
+    <tr><td><code>init_noise_std</code></td><td>1.0</td><td>ค่า std เริ่มต้นของ action noise (ความสุ่มตอนเริ่ม train สูง → สำรวจเยอะ)</td></tr>
+    <tr><td><code>actor_hidden_dims</code></td><td><span class="tag actor">[256, 128, 64]</span></td><td>จำนวน neuron ของแต่ละ hidden layer ของ actor (3 ชั้น ลดลงเรื่อยๆ)</td></tr>
+    <tr><td><code>critic_hidden_dims</code></td><td><span class="tag critic">[256, 128, 64]</span></td><td>จำนวน neuron ของแต่ละ hidden layer ของ critic</td></tr>
+    <tr><td><code>actor_obs_normalization</code></td><td>True</td><td>normalize observation ที่เข้า actor (ใช้สถิติ running mean/std)</td></tr>
+    <tr><td><code>critic_obs_normalization</code></td><td>False</td><td>ไม่ normalize obs ที่เข้า critic</td></tr>
+    <tr><td><code>state_dependent_std</code></td><td>False</td><td>std ของ action เป็นค่าคงที่ (ไม่เปลี่ยนตาม state) — ง่ายกว่า/เสถียรกว่า</td></tr>
+    <tr><td><code>activation</code></td><td><code>elu</code></td><td>activation function ของ hidden layer (ELU ไม่มี dead neuron เหมือน ReLU ตอนค่าเป็นลบมาก)</td></tr>
+  </table>
+
+  <h3>ทำไม hidden dims เป็น [256,128,64] (ลดลง)?</h3>
+  <p>
+    ยิ่งชั้นลึกขนาดเล็กลงเรื่อยๆ ช่วยให้โมเดล<b>บีบข้อมูล</b>จาก observation ไปสู่ action ได้แบบ hierarchical
+    โดย 256 มี capacity พอสำหรับงาน locomotion เบาๆ แต่ไม่ใหญ่เกินจน overfit/เทรนช้า
+    (สังเกตว่า distillation student เล็กกว่ามาก ≈ <code>[64,32]</code> เพื่อให้รันบน MCU ได้)
+  </p>
+</section>
+
+<!-- ============ ALGORITHM ============ -->
+<section id="algorithm">
+  <h2>5. Algorithm Config — PPO hyperparameters</h2>
+  <p>มาจาก <code>algorithm = RslRlPpoAlgorithmCfg(...)</code></p>
+  <table>
+    <tr><th>พารามิเตอร์</th><th>ค่า</th><th>ความหมาย</th></tr>
+    <tr><td><code>value_loss_coef</code></td><td>1.0</td><td>น้ำหนักของ value loss (เทียบกับ policy loss)</td></tr>
+    <tr><td><code>use_clipped_value_loss</code></td><td>True</td><td>ใช้ clipping กับ value loss ด้วย (กัน critic กระโดด)</td></tr>
+    <tr><td><code>clip_param</code></td><td>0.2</td><td>ขอบเขต clipping ของ policy ratio (ค่าน้อย = อัปเดตช้าและเสถียร)</td></tr>
+    <tr><td><code>entropy_coef</code></td><td>0.005</td><td>น้ำหนัก entropy bonus — ยิ่งมากยิ่งสุ่มสำรวจ (balance exploration/exploitation)</td></tr>
+    <tr><td><code>num_learning_epochs</code></td><td>10</td><td>จำนวน epoch ที่ train ต่อ 1 iteration บนข้อมูลที่เก็บมา</td></tr>
+    <tr><td><code>num_mini_batches</code></td><td>4</td><td>แบ่งข้อมูลออกเป็นกี่ mini-batch ระหว่าง train (เพิ่ม stochastics)</td></tr>
+    <tr><td><code>learning_rate</code></td><td>3e-3</td><td>อัตราเรียนรู้ของ optimizer</td></tr>
+    <tr><td><code>gamma</code></td><td>0.99</td><td>discount factor — ให้ความสำคัญกับอนาคตไกลแค่ไหน</td></tr>
+    <tr><td><code>lam</code></td><td>0.95</td><td>GAE λ — ถ่วงน้ำหนักระหว่าง bias/variance ของ advantage</td></tr>
+    <tr><td><code>max_grad_norm</code></td><td>1.0</td><td>ค่า grad clipping (กัน gradient explosion)</td></tr>
+    <tr><td><code>schedule</code></td><td><code>adaptive</code></td><td>ปรับ learning_rate ตาม KL divergence อัตโนมัติ</td></tr>
+    <tr><td><code>desired_kl</code></td><td>0.01</td><td>ค่า KL ที่ต้องการ — ถ้า KL มากไป ลด lr, ถ้าน้อยไป เพิ่ม lr</td></tr>
+  </table>
+
+  <h3>ภาพรวมการอัปเดตต่อ iteration</h3>
+  <pre>
+1. เก็บ (num_steps_per_env=16 steps × N env)  →  ได้ batch ประสบการณ์
+2. แบ่งเป็น num_mini_batches=4
+3. train num_learning_epochs=10 epoch
+   - คำนวณ advantage ด้วย GAE (gamma=0.99, lam=0.95)
+   - อัปเดต actor+critic ด้วย gradient (clip 0.2, lr 3e-3 adaptive)
+   - เติม entropy_coef=0.005 เพื่อกระตุ้นการสำรวจ
+4. เช็ค KL → ปรับ learning rate ตาม desired_kl
+5. ทุก save_interval=50 → บันทึก checkpoint
+  </pre>
+</section>
+
+<!-- ============ OBS/ACT ============ -->
+<section id="obs">
+  <h2>6. Observation &amp; Action Space</h2>
+  <p>กำหนดใน <code>bimo_task_env.py</code> → <code>BimoEnvCfg</code></p>
+
+  <h3>Observation (11 ค่า)</h3>
+  <table>
+    <tr><th>กลุ่ม</th><th>จำนวน</th><th>รายละเอียด</th></tr>
+    <tr><td>IMU orientation</td><td>3</td><td>roll, pitch, yaw (จาก <code>quaternion_to_euler</code>) — scale เป็น [-1,1]</td></tr>
+    <tr><td>Last commanded positions</td><td>8</td><td>ตำแหน่ง servo ทั้ง 8 ตัวล่าสุด — scale ตาม <code>servo_min/max</code></td></tr>
+  </table>
+  <p class="mono">obs = [roll, pitch, yaw, servo_1..servo_8]  (11 ค่า)</p>
+
+  <h3>Action (8 ค่า)</h3>
+  <table>
+    <tr><th>รายละเอียด</th><th>ค่า</th></tr>
+    <tr><td>Servos</td><td>RHip, LHip, RShoulder, LShoulder, RKnee, LKnee, RAnkle, LAnkle</td></tr>
+    <tr><td>Action คือ</td><td><b>position delta</b> (องศา), clip ที่ <code>[-3, 3]</code></td></tr>
+    <tr><td>นำไปใช้</td><td><code>new_pos = last_pos + action × (4/3)</code> แล้ว clip ตาม <code>servo_min/max</code></td></tr>
+  </table>
+
+  <div class="note ok">
+    <b>ที่ตั้งค่ามาจากโค้ด:</b><br/>
+    <code>servo_min = [-90, -90, -12, -90, 0, 0, -93, -93]</code><br/>
+    <code>servo_max = [90, 90, 90, 12, 140, 140, 93, 93]</code><br/>
+    <code>stand_pose = [-30, -30, 0, 0, 60, 60, 30, 30]</code>
+  </div>
+</section>
+
+<!-- ============ DISTILL ============ -->
+<section id="distill">
+  <h2>7. Distillation Policy (สำหรับ RP2040)</h2>
+  <p>ถ้าอยากให้หุ่นเดินได้โดยไม่ต้องต่อ PC การใช้ PPO teacher (ใหญ่เกินไป) จะไม่ไหวกับ MCU
+  จึงใช้ <b>distillation</b> บีบความรู้จาก teacher ลง student ตัวเล็ก</p>
+  <table>
+    <tr><th>พารามิเตอร์</th><th>ค่า</th><th>ความหมาย</th></tr>
+    <tr><td><code>student_hidden_dims</code></td><td><span class="tag distill">[64, 32]</span></td><td>student เล็กมาก พอรันบน RP2040 ได้</td></tr>
+    <tr><td><code>teacher_hidden_dims</code></td><td><span class="tag actor">[256, 128, 64]</span></td><td>teacher ตัวเต็ม (PPO ที่เทรนแล้ว)</td></tr>
+    <tr><td><code>loss_type</code></td><td><code>mse</code></td><td>ใช้ Mean Squared Error เปรียบเทียบ action ระหว่าง teacher/student</td></tr>
+    <tr><td><code>gradient_length</code></td><td>16</td><td>ความยาว gradient ที่ไหลย้อนกลับ (ให้ student เลียนแบบหลาย step)</td></tr>
+    <tr><td><code>load_run</code> / <code>load_checkpoint</code></td><td><code>.*</code> / <code>model_.*.pt</code></td><td>โหลด checkpoint ล่าสุดของ teacher มาให้ student เลียนแบบ</td></tr>
+  </table>
+  <p>เส้นทางใช้งาน:  train PPO → distill student → export student เป็น <code>policy.onnx</code> → ใช้ <code>onnx2c</code> แปลงเป็น C → compile เข้า firmware RP2040</p>
+
+  <svg class="net" viewBox="0 0 760 250" role="img" aria-label="แผนภาพ Knowledge Distillation ระหว่าง Teacher และ Student">
+    <defs>
+      <marker id="arrD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#c9b7ff"/>
+      </marker>
+    </defs>
+
+    <text x="150" y="35" fill="#9cc0ff" font-size="13" font-weight="700">TEACHER · PPO ที่เทรนแล้ว</text>
+    <rect x="150" y="48" width="85" height="58" rx="10" fill="#1d2130" stroke="#2f6df6" stroke-width="2"/>
+    <text x="192" y="86" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">256</text>
+    <rect x="265" y="48" width="75" height="58" rx="10" fill="#1d2130" stroke="#2f6df6" stroke-width="2"/>
+    <text x="302" y="86" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">128</text>
+    <rect x="370" y="48" width="65" height="58" rx="10" fill="#1d2130" stroke="#2f6df6" stroke-width="2"/>
+    <text x="402" y="86" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">64</text>
+    <rect x="490" y="48" width="100" height="58" rx="10" fill="#1f3a6e" stroke="#2f6df6" stroke-width="2"/>
+    <text x="540" y="78" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">action</text>
+    <text x="540" y="93" fill="#9cc0ff" font-size="10" text-anchor="middle">(8)</text>
+
+    <text x="150" y="155" fill="#c9b7ff" font-size="13" font-weight="700">STUDENT · ขนาดเล็ก (RP2040)</text>
+    <rect x="150" y="168" width="70" height="52" rx="10" fill="#1d2130" stroke="#c9b7ff" stroke-width="2"/>
+    <text x="185" y="199" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">64</text>
+    <rect x="250" y="168" width="70" height="52" rx="10" fill="#1d2130" stroke="#c9b7ff" stroke-width="2"/>
+    <text x="285" y="199" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">32</text>
+    <rect x="490" y="168" width="100" height="52" rx="10" fill="#3a2e6e" stroke="#c9b7ff" stroke-width="2"/>
+    <text x="540" y="193" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">action</text>
+    <text x="540" y="208" fill="#c9b7ff" font-size="10" text-anchor="middle">(8)</text>
+
+    <g stroke="#c9b7ff" stroke-width="2" fill="none">
+      <line x1="235" y1="77" x2="261" y2="77"/><polygon points="261,72 269,77 261,82" fill="#c9b7ff"/>
+      <line x1="340" y1="77" x2="366" y2="77"/><polygon points="366,72 374,77 366,82" fill="#c9b7ff"/>
+      <line x1="435" y1="77" x2="486" y2="77"/><polygon points="486,72 494,77 486,82" fill="#c9b7ff"/>
+      <line x1="220" y1="194" x2="246" y2="194"/><polygon points="246,189 254,194 246,199" fill="#c9b7ff"/>
+      <line x1="320" y1="194" x2="486" y2="194"/><polygon points="486,189 494,194 486,199" fill="#c9b7ff"/>
+    </g>
+
+    <g stroke="#f5b94e" stroke-width="2" fill="none" stroke-dasharray="5 4">
+      <line x1="540" y1="106" x2="540" y2="150"/>
+      <polygon points="535,150 540,158 545,150" fill="#f5b94e"/>
+    </g>
+    <text x="552" y="130" fill="#f5b94e" font-size="11" font-weight="700">MSE loss</text>
+    <text x="150" y="242" fill="#9aa3b2" font-size="10">student เลียนแบบ action ของ teacher จนเกือบเหมือนกัน แต่เบาลงจนรันบน MCU ได้</text>
+  </svg>
+  <p class="net-caption">รูป: Knowledge Distillation — Teacher [256,128,64] ถ่ายทอดความรู้ให้ Student [64,32] ด้วย MSE loss</p>
+</section>
+
+<!-- ============ DEPLOY ============ -->
+<section id="deploy">
+  <h2>8. จาก train → export → ใช้งานจริง</h2>
+
+  <h3>ขั้นตอน</h3>
+  <table>
+    <tr><th>ขั้น</th><th>คำสั่ง</th><th>ผลลัพธ์</th></tr>
+    <tr><td>1. Train</td><td><code>isaaclab.bat -p scripts/.../train.py --task Bimo --num_envs 2048 --headless</code></td><td>checkpoint <code>model_*.pt</code></td></tr>
+    <tr><td>2. Export</td><td><code>isaaclab.bat -p scripts/.../play.py --task Bimo --num_envs 1 --headless</code></td><td><code>policy.onnx</code> ใน <code>logs/rsl_rl/bimo_ppo_rsrl/&lt;run&gt;/exported/</code></td></tr>
+    <tr><td>3. Copy</td><td>คัดลอก <code>policy.onnx</code> ไปที่ working dir</td><td>พร้อมใช้งาน</td></tr>
+    <tr><td>4. Run</td><td><code>python nn_walk.py</code></td><td>หุ่นเดินตาม policy</td></tr>
+  </table>
+
+  <h3>ตอน inference (nn_walk.py)</h3>
+  <pre>
+ses = onnxruntime.InferenceSession("policy.onnx", providers=["CUDA", "CPU"])
+
+loop ทุก 50ms:
+  state = bimo.request_state_data()
+  obs   = process_observations(state["orient"], last_actions)   # 11 ค่า
+  act   = ses.run(None, {input: obs.reshape(1,-1)})             # [1,8] delta
+  new   = process_actions(act, last_actions)                    # บวกเข้ากับตำแหน่งเดิม
+  bimo.send_positions(new)
+  last_actions = new
+  </pre>
+
+  <div class="note">
+    <b>ข้อควรระวัง:</b> observation ที่ใช้ตอน inference ต้อง<b>ตรงกับตอน train</b> (เรียงลำดับและ scale เหมือนกัน)
+    ไม่งั้น policy จะทำงานผิดเพี้ยน
+  </div>
+</section>
+
+<!-- ============ ARM ============ -->
+<section id="arm">
+  <h2>9. 🤖 แขนกล 3DOF — ปรับใช้กับโปรเจกต์ terk_arm_esp32_v1</h2>
+  <p>โครงสร้าง PPO ทั้งหมดที่อธิบายข้างต้น (Actor–Critic, Runner, Algorithm) ใช้ได้กับ<b>แขนกล</b>เหมือนกัน
+  — ต่างกันแค่ <b>Observation / Action Space</b> และขนาดโครงข่ายที่เล็กกว่า
+  เพราะงาน “เอื้อม–คีบ” ง่ายกว่างานเดินทรงตัว</p>
+
+  <h3>เปรียบเทียบ Bimo (หุ่นเดิน) vs แขนกล 3DOF</h3>
+  <table>
+    <tr><th>หัวข้อ</th><th>Bimo (หุ่นเดิน)</th><th>แขนกล 3DOF (terk_arm)</th></tr>
+    <tr><td>Observation</td><td>IMU 3 + servo 8 = <b>11</b></td><td>มุมข้อต่อ 3 + gripper 1 + เป้าหมาย x,y,z 3 = <b>7</b></td></tr>
+    <tr><td>Action</td><td>servo 8 = <b>8</b> (delta)</td><td>Δθ₁, Δθ₂, Δθ₃ + gripper = <b>4</b> (delta)</td></tr>
+    <tr><td>hidden dims</td><td>[256, 128, 64]</td><td><b>[128, 64]</b> (เล็กลง — งานง่ายกว่า)</td></tr>
+    <tr><td>Simulator</td><td>Isaac Lab (Bimo task)</td><td>MuJoCo (Reacher) หรือ Isaac Lab</td></tr>
+    <tr><td>Target อุปกรณ์</td><td>RP2040 (MCU)</td><td>ESP32 (หรือ PC)</td></tr>
+  </table>
+
+  <h3>Observation &amp; Action ของแขนกล (แนะนำ)</h3>
+  <p class="mono">obs = [θ1, θ2, θ3, gripper, target_x, target_y, target_z]  (7 ค่า)</p>
+  <p class="mono">action = [Δθ1, Δθ2, Δθ3, gripper]  (4 ค่า) → new_pos = last_pos + action × scale แล้ว clip ตาม servo_min/max</p>
+
+  <h3>Policy Config ที่แนะนำสำหรับแขนกล</h3>
+  <pre>
+actor_hidden_dims   = [128, 64]     # แขน 3 แกนไม่ต้องใหญ่เท่า Bimo
+critic_hidden_dims  = [128, 64]
+init_noise_std      = 1.0           # เริ่มสำรวจเยอะ
+clip_param          = 0.2
+entropy_coef        = 0.005
+  </pre>
+
+  <h3>Reward ที่แนะนำ (ตัวอย่าง)</h3>
+  <pre>
++ เข้าใกล้เป้าหมาย (ระยะห่างระหว่างปลายแขนกับเป้าหมายลดลง)
++ คีบจับสำเร็จ (gripper ปิด + วัตถุติด)
+− ปลายแขนเกินขอบเขตการทำงาน (outside workspace)
+− ใช้เวลา / พลังงานมากเกินไป
+  </pre>
+
+  <div class="note ok">
+    <b>Deploy ลง ESP32:</b><br/>
+    train ใน MuJoCo / Isaac Lab → export <code>policy.onnx</code> → แปลงเป็น C (onnx2c / TFLite Micro)
+    → รันบน ESP32 → สั่งงานผสานกับ <code>/api/move</code> ที่มีอยู่แล้วในโปรเจกต์
+    (ดูหัวข้อ <a href="index.html#rl">RL &amp; Sim ในเว็บสื่อการสอน</a>)
+  </div>
+
+  <div class="note">
+    <b>ใช้คู่กับ Kinematics:</b> ปกติยังใช้ IK กำหนดเป้าหมาย (หัวข้อ Kinematics ในเว็บ)
+    แล้วให้ PPO เรียนรู้ “การควบคุมละเอียด” เช่น หนีบของนุ่ม หลบสิ่งกีดขวาง — ทั้งสองอย่างใช้คู่กันได้
+  </div>
+</section>
+
+<!-- ============ GAL ============ -->
+<section id="gal">
+  <h2>10. พารามิเตอร์มีผลต่อพฤติกรรมยังไง</h2>
+  <table>
+    <tr><th>อยากได้...</th><th>ปรับดังนี้</th></tr>
+    <tr><td>เดินได้เร็วขึ้น / ท่าทางก้าวร้าวขึ้น</td><td>ลด <code>entropy_coef</code> (เช่น 0.001) หรือเพิ่ม <code>learning_rate</code></td></tr>
+    <tr><td>เดินช้าลง มั่นคงขึ้น</td><td>เพิ่ม <code>entropy_coef</code> + ลด <code>learning_rate</code></td></tr>
+    <tr><td>policy ไม่เสถียร / reward แกว่ง</td><td>ลด <code>clip_param</code> หรือ <code>learning_rate</code> หรือหยุดใช้ <code>empirical_normalization</code></td></tr>
+    <tr><td>อยากให้หุ่นเดินได้นาน (ไม่ล้ม)</td><td>ปรับ reward weights ใน <code>bimo_task_env.py</code> (เช่น เพิ่มน้ำหนัก height/joint pos)</td></tr>
+    <tr><td>โมเดลเร็วกว่าตอน inference</td><td>ลด hidden dims ของ actor หรือใช้ distillation student</td></tr>
+  </table>
+</section>
+
+</main>
+
+<footer>
+  Bimo Robotics Kit &amp; แขนกล 3DOF (terk_arm_esp32_v1) · เอกสารอธิบาย PPO &amp; Policy Configuration · สร้างจากโค้ด <code>IsaacLab/bimo/agents/rsl_rl.py</code>, <code>bimo_task_env.py</code> และโปรเจกต์ <code>terk182/terk_arm_esp32_v1</code>
+</footer>
+
+</body>
+</html>
