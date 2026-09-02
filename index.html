@@ -239,6 +239,7 @@
       <a href="#hardware">ฮาร์ดแวร์</a>
       <a href="#software">โค้ด</a>
       <a href="#api">API</a>
+      <a href="#rl">RL &amp; Sim</a>
       <a href="#bom">BOM</a>
     </div>
   </div>
@@ -1541,9 +1542,144 @@ print("✅ แขนกลเคลื่อนไปหยิบชิ้นง
     </div>
   </section>
 
+  <!-- ================= RL & SIMULATION ================= -->
+  <section id="rl">
+    <h2><span class="num">11</span> 🎮 Reinforcement Learning + การเทรนใน Simulator (MuJoCo / Isaac Sim)</h2>
+    <p>ต่อยอดจากแขนกลของเรา — นอกจากการควบคุมด้วยสูตร Kinematics แล้ว ยังมีอีกแนวทางคือ
+    ให้ AI <b>เรียนรู้การควบคุมเองด้วย Reinforcement Learning (RL)</b> โดยเทรนในโลกจำลอง (Simulator) ก่อน
+    แล้วค่อยนำไปใช้กับแขนจริง (Sim-to-Real)</p>
+
+    <div class="card">
+      <h4>🧠 RL เบื้องต้นใน 1 นาที</h4>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;" class="rl-loop">
+        <svg class="illus" viewBox="0 0 420 190" role="img" aria-label="แผนภาพวงจร Reinforcement Learning" style="margin:0;max-width:400px;">
+          <rect x="20" y="55" width="150" height="80" rx="12" fill="#6366f1"/>
+          <text x="95" y="93" font-size="14" fill="#fff" text-anchor="middle" font-weight="700">Agent 🤖</text>
+          <text x="95" y="111" font-size="9" fill="#c7d2fe" text-anchor="middle">Policy π(a|s)</text>
+          <rect x="250" y="55" width="150" height="80" rx="12" fill="#10b981"/>
+          <text x="325" y="93" font-size="14" fill="#fff" text-anchor="middle" font-weight="700">Environment 🌍</text>
+          <text x="325" y="111" font-size="9" fill="#d1fae5" text-anchor="middle">MuJoCo / Isaac Sim</text>
+          <line x1="170" y1="75" x2="248" y2="75" stroke="#f59e0b" stroke-width="3"/>
+          <polygon points="248,70 260,75 248,80" fill="#f59e0b"/>
+          <text x="209" y="66" font-size="10" fill="#d97706" text-anchor="middle" font-weight="700">Action</text>
+          <line x1="248" y1="115" x2="170" y2="115" stroke="#0ea5e9" stroke-width="3"/>
+          <polygon points="170,110 158,115 170,120" fill="#0ea5e9"/>
+          <text x="209" y="133" font-size="10" fill="#0284c7" text-anchor="middle" font-weight="700">State + Reward</text>
+        </svg>
+        <div>
+          <ul>
+            <li><b>Agent</b> — สมอง/Policy ที่จะเรียนรู้ (เช่น แขนกล)</li>
+            <li><b>Environment</b> — โลกที่ Agent อยู่ (ฟิสิกส์ใน Simulator)</li>
+            <li><b>State (s)</b> — สิ่งที่ Agent เห็น (มุมข้อต่อ, ตำแหน่งเป้าหมาย)</li>
+            <li><b>Action (a)</b> — สิ่งที่ Agent สั่ง (แรงบิด / มุมมอเตอร์)</li>
+            <li><b>Reward (r)</b> — คะแนนตอบแทน (เข้าใกล้เป้า = บวก, ชนอะไร = ลบ)</li>
+          </ul>
+          <p style="font-size:.9rem;">Agent เล่นซ้ำหลายพันรอบ (Episode) เพื่อปรับ Policy ให้ได้คะแนนรวมสูงสุด
+          — เหมือนการฝึกสุนัขด้วยขนม!</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🛡️ ทำไมต้องเทรนใน Simulator ก่อน (Sim-to-Real)</h4>
+      <div class="grid grid-3">
+        <div><h4>⚡ เร็ว</h4><p>ซิมรันเร็วหลายร้อยเท่าของเวลาจริง — เทรนเป็นล้านรอบได้ในไม่กี่ชั่วโมง</p></div>
+        <div><h4>🛡️ ปลอดภัย</h4><p>ไม่ต้องกลัวแขนพัง/ชนของจริง ตอนที่ยัง Trial &amp; Error ช่วงแรก</p></div>
+        <div><h4>💰 ถูก</h4><p>ไม่ต้องใช้อุปกรณ์หลายชุด — รันขนานได้หลายพัน Environment บน GPU</p></div>
+      </div>
+      <div class="note warn"><span class="label">⚠️ ข้อควรระวัง:</span>
+      มีช่องว่างระหว่างซิมกับของจริง (<b>Sim-to-Real Gap</b>) เช่น แรงเสียดทาน ความหน่วงของมอเตอร์
+      — ควรสุ่มค่าพารามิเตอร์ในซิม (<b>Domain Randomization</b>) เพื่อให้ Policy ทนทานเมื่อไปใช้งานจริง</div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h4>🦾 MuJoCo — ฟิสิกส์เอนจินโอเพนซอร์ส (Google DeepMind)</h4>
+        <ul>
+          <li><b>ฟรี + Open Source</b> ติดตั้งง่ายด้วย <code>pip install mujoco</code></li>
+          <li>ฟิสิกส์รวดเร็ว แม่นยำ เหมาะกับงาน Contact-rich (การคีบจับ)</li>
+          <li>ฟอร์แมตโมเดล <b>MJCF (XML)</b> — เขียน/แก้โมเดลแขนด้วยมือได้</li>
+          <li>เชื่อมกับ <b>Gymnasium</b> + <b>Stable-Baselines3</b> (PPO) ได้ทันที</li>
+          <li>มีโมเดลสำเร็จรูปใน <b>MuJoCo Menagerie</b> (รวมแขนกลหลายรุ่น)</li>
+        </ul>
+        <pre><code># pip install mujoco gymnasium stable-baselines3
+import gymnasium as gym
+from stable_baselines3 import PPO
+
+# แขนกล 2 ข้อต่อใน MuJoCo (Reacher: เอื้อมถึงเป้า)
+env = gym.make("Reacher-v5")
+
+# เทรนด้วย PPO (Proximal Policy Optimization)
+model = PPO("MlpPolicy", env, verbose=1)
+model.learn(total_timesteps=200_000)
+model.save("reacher_policy")
+
+# ทดสอบ Policy ที่เทรนแล้ว
+env = gym.make("Reacher-v5", render_mode="human")
+obs, _ = env.reset()
+for _ in range(500):
+    action, _ = model.predict(obs, deterministic=True)
+    obs, reward, terminated, truncated, _ = env.step(action)
+    if terminated or truncated:
+        obs, _ = env.reset()</code></pre>
+      </div>
+      <div class="card">
+        <h4>🎮 NVIDIA Isaac Sim + Isaac Lab — ระดับโรงงาน</h4>
+        <ul>
+          <li>Simulator บน <b>NVIDIA Omniverse</b> — ภาพสมจริงด้วย RTX, ฟิสิกส์บน GPU</li>
+          <li>นำเข้าโมเดลได้จาก <b>URDF / MJCF / Onshape / CAD</b> → แปลงเป็น USD</li>
+          <li><b>Isaac Lab</b> = เฟรมเวิร์ก Robot Learning (โอเพนซอร์ส) — มี <b>30+ สภาพแวดล้อมสำเร็จรูป</b>, หุ่นยนต์ 16+ รุ่น</li>
+          <li>รองรับ RL หลายไลบรารี: <b>RSL-RL, SKRL, RL Games, Stable-Baselines3</b></li>
+          <li>เซนเซอร์สมจริง: RTX Camera, LiDAR, Depth, IMU — เหมาะกับงาน Perception</li>
+          <li>ข้อจำกัด: ต้องมี <b>GPU NVIDIA RTX</b> และติดตั้งหนัก (หลาย GB)</li>
+        </ul>
+        <pre><code># Isaac Lab: เทรนแขน Franka ให้เอื้อมถึงเป้า (ตัวอย่างคำสั่ง)
+./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py \
+    --task Isaac-Reach-Franka-v0 --num_envs 4096</code></pre>
+        <div class="note tip"><span class="label">💡 Isaac Lab ล่าสุด (2026):</span>
+        เวอร์ชัน 3.0 (Beta) ใช้กับ Isaac Sim 6.x — รองรับการเทรนแบบ Multi-Agent,
+        Imitation Learning และทำงานกับเอนจิน <b>Newton</b> (โอเพนซอร์สใหม่จาก
+        NVIDIA + Google DeepMind + Disney) ได้ด้วย</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>⚖️ เปรียบเทียบ MuJoCo vs Isaac Sim — เลือกใช้ตัวไหน?</h4>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>หัวข้อ</th><th>MuJoCo</th><th>NVIDIA Isaac Sim + Isaac Lab</th></tr></thead>
+        <tbody>
+          <tr><td>ลิขสิทธิ์</td><td>ฟรี + Open Source (DeepMind)</td><td>ฟรี (Isaac Lab: Apache 2.0)</td></tr>
+          <tr><td>ความสมจริงภาพ</td><td>พื้นฐาน (OpenGL)</td><td>Photorealistic (RTX / Omniverse)</td></tr>
+          <tr><td>ความเร็ว / ขนาด</td><td>เบา เร็ว รันบน CPU ได้</td><td>GPU-accelerated รันหลายพัน Env พร้อมกัน</td></tr>
+          <tr><td>ฟอร์แมตโมเดล</td><td>MJCF, URDF</td><td>USD, URDF, MJCF, Onshape, CAD</td></tr>
+          <tr><td>เซนเซอร์</td><td>พื้นฐาน</td><td>RTX Camera, LiDAR, Depth, IMU ฯลฯ</td></tr>
+          <tr><td>RL Framework</td><td>Gymnasium + Stable-Baselines3</td><td>RSL-RL, SKRL, RL Games, SB3</td></tr>
+          <tr><td>ฮาร์ดแวร์ขั้นต่ำ</td><td>CPU/GPU ทั่วไป</td><td>ต้องมี GPU NVIDIA RTX</td></tr>
+          <tr><td>เหมาะกับ</td><td>มือใหม่, เรียน RL, ทดสอบไอเดียเร็ว</td><td>งานใหญ่, Sim-to-Real, Perception</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🚀 ต่อยอดกับแขนกลของค่าย</h4>
+      <ol>
+        <li>สร้างโมเดลแขนกลใน <b>Onshape</b> → Export เป็น <b>URDF</b> (หรือใช้ปลั๊กอิน Onshape-to-URDF)</li>
+        <li>โหลดเข้า <b>MuJoCo</b> (เบา เริ่มต้นเร็ว) หรือ <b>Isaac Sim</b> (สมจริง) เพื่อทดสอบฟิสิกส์</li>
+        <li>นิยาม Reward: “เข้าใกล้เป้า / คีบจับสำเร็จ = +” “ชนพื้น / เกินขอบเขต = −”</li>
+        <li>เทรนด้วย <b>PPO</b> จนได้ Policy ที่คีบ–วางชิ้นงานได้</li>
+        <li>Export Policy แล้วนำไปรันบน ESP32 (หรือคอมพิวเตอร์) สั่งผ่าน <code>/api/move</code> ที่มีอยู่แล้ว</li>
+      </ol>
+      <div class="note tip"><span class="label">💡 แนวคิด:</span>
+      RL ไม่ได้มาแทนที่ Kinematics — โดยทั่วไปยังใช้ IK กำหนดเป้าหมาย แล้วให้ RL เรียนรู้
+      “การควบคุมละเอียด” (เช่น หนีบของนุ่ม, หลบสิ่งกีดขวาง) — ทั้งสองอย่างใช้คู่กันได้</div>
+    </div>
+  </section>
+
   <!-- ================= BOM ================= -->
   <section id="bom">
-    <h2><span class="num">11</span> 🧾 ตาราง BOM (Bill of Materials) — ตัวอย่างต้นทุน</h2>
+    <h2><span class="num">12</span> 🧾 ตาราง BOM (Bill of Materials) — ตัวอย่างต้นทุน</h2>
     <p>ตารางตัวอย่างสำหรับ 1 ชุด ให้ปรับราคาตามจริงที่หาได้จาก Shopee ในวันที่เรียน
     (ราคาประมาณการเท่านั้น — ใช้เป็น <b>แบบฟอร์ม</b> ให้ผู้เรียนกรอกเอง)</p>
     <div class="card">
@@ -1575,7 +1711,7 @@ print("✅ แขนกลเคลื่อนไปหยิบชิ้นง
 
   <!-- ================= RESOURCES ================= -->
   <section id="resources">
-    <h2><span class="num">12</span> 📚 เอกสารและแหล่งเรียนรู้เพิ่มเติม</h2>
+    <h2><span class="num">13</span> 📚 เอกสารและแหล่งเรียนรู้เพิ่มเติม</h2>
     <div class="grid grid-2">
       <div class="card">
         <h4>🔗 ลิงก์สำคัญ</h4>
@@ -1588,6 +1724,11 @@ print("✅ แขนกลเคลื่อนไปหยิบชิ้นง
           <li>Bambu Studio (Slicer): <a href="https://bambulab.com/en/download/studio" target="_blank" rel="noopener">bambulab.com</a></li>
           <li>Ollama (Local LLM): <a href="https://ollama.com" target="_blank" rel="noopener">ollama.com</a></li>
           <li>โมเดลไทย Typhoon: <a href="https://ollama.com/library/typhoon-instruct" target="_blank" rel="noopener">typhoon-instruct</a></li>
+          <li>MuJoCo (ฟิสิกส์เอนจินฟรี): <a href="https://mujoco.org" target="_blank" rel="noopener">mujoco.org</a></li>
+          <li>Gymnasium (สภาพแวดล้อม RL): <a href="https://gymnasium.farama.org" target="_blank" rel="noopener">gymnasium.farama.org</a></li>
+          <li>Stable-Baselines3 (อัลกอริทึม RL): <a href="https://stable-baselines3.readthedocs.io" target="_blank" rel="noopener">stable-baselines3.readthedocs.io</a></li>
+          <li>NVIDIA Isaac Sim: <a href="https://developer.nvidia.com/isaac/sim" target="_blank" rel="noopener">developer.nvidia.com/isaac/sim</a></li>
+          <li>Isaac Lab (เฟรมเวิร์ก Robot Learning): <a href="https://isaac-sim.github.io/IsaacLab" target="_blank" rel="noopener">isaac-sim.github.io/IsaacLab</a></li>
         </ul>
       </div>
       <div class="card">
