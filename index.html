@@ -1151,6 +1151,84 @@ elbow = circle_intersection(shoulder, MAIN_LEN, wrist_goal, FOREARM_LEN)</code><
       ซึ่งเหมาะกับแขนที่โครงสร้างมีจุดหมุนเยื้องศูนย์ และใช้โค้ด Python + NumPy
       (<code>pip install numpy</code>) — สอนให้เห็นว่าการแก้ปัญหาเดียวกันมีได้หลายวิธี</div>
     </div>
+
+    <!-- ============ DH PARAMETERS ============ -->
+    <h3>🧩 Denavit–Hartenberg (DH) Parameters — วิธีมาตรฐานสากล</h3>
+    <div class="card">
+      <h4>🧩 DH Parameters คืออะไร</h4>
+      <p><b>Denavit–Hartenberg (DH)</b> เป็นวิธีมาตรฐาน (ตีพิมพ์ปี 1955) ในการอธิบายโครงสร้างแขนหุ่นยนต์
+      ด้วยพารามิเตอร์เพียง <b>4 ค่าต่อข้อต่อ</b> — ต่างจากตรีโกณมิติที่ต้องคิดเฉพาะโครงสร้าง
+      DH ใช้ได้กับแขนทุกแบบและหลายข้อต่อ (รวมถึงหุ่นยนต์อุตสาหกรรม 6 แกน)</p>
+      <p>พารามิเตอร์ 4 ตัว สำหรับข้อต่อที่ i:</p>
+      <div class="grid grid-4">
+        <div><h4>aᵢ</h4><p>ระยะตามแกน x (ความยาวก้าน)</p></div>
+        <div><h4>αᵢ</h4><p>มุมบิดรอบแกน x (Link Twist)</p></div>
+        <div><h4>dᵢ</h4><p>ระยะเลื่อนตามแกน z (Offset)</p></div>
+        <div><h4>θᵢ</h4><p>มุมหมุนรอบแกน z — <b>ตัวแปรของข้อต่อหมุน</b></p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>📋 ตาราง DH ของแขน 3 DOF (ตัวอย่าง)</h4>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>ข้อต่อ i</th><th>aᵢ (mm)</th><th>αᵢ (deg)</th><th>dᵢ (mm)</th><th>θᵢ (deg)</th><th>หมายเหตุ</th></tr></thead>
+        <tbody>
+          <tr><td>1 (ฐานหมุน)</td><td>0</td><td>−90°</td><td>156.5</td><td>θ₁ (ตัวแปร)</td><td>หมุนรอบแกน Z</td></tr>
+          <tr><td>2</td><td>135</td><td>0°</td><td>0</td><td>θ₂ (ตัวแปร)</td><td>ความยาว L1</td></tr>
+          <tr><td>3</td><td>157</td><td>0°</td><td>0</td><td>θ₃ (ตัวแปร)</td><td>ความยาว L2</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p style="font-size:.85rem;color:var(--muted);">ค่า a, d, α เป็นค่าคงที่ของโครงสร้าง ส่วน θ เป็นตัวแปรที่เปลี่ยนตามข้อต่อหมุน (Revolute)</p>
+    </div>
+
+    <div class="card">
+      <h4>🧮 เมทริกซ์แปลง (Transformation Matrix) ของ DH</h4>
+      <pre><code>Tᵢ = Rot(z, θᵢ) · Trans(z, dᵢ) · Trans(x, aᵢ) · Rot(x, αᵢ)
+
+    ┌  cosθ   −sinθ·cosα    sinθ·sinα    a·cosθ  ┐
+T = │  sinθ    cosθ·cosα   −cosθ·sinα    a·sinθ  │
+    │    0        sinα        cosα        d      │
+    └    0         0           0          1      ┘</code></pre>
+      <p>FK ทั้งแขน = <code>T₁ × T₂ × T₃</code> (คูณเมทริกซ์ต่อกันทุกข้อต่อ)
+      — ตำแหน่งปลายแขน (x, y, z) อยู่ในคอลัมน์สุดท้ายของผลลัพธ์</p>
+    </div>
+
+    <div class="card">
+      <h4>🐍 โค้ด Python: คำนวณ FK ด้วย DH Parameters</h4>
+      <pre><code>import numpy as np
+
+def dh_transform(a, alpha, d, theta):
+    """เมทริกซ์แปลง DH สำหรับหนึ่งข้อต่อ (มุมเป็นเรเดียน)"""
+    ct, st = np.cos(theta), np.sin(theta)
+    ca, sa = np.cos(alpha), np.sin(alpha)
+    return np.array([
+        [ct, -st*ca,  st*sa, a*ct],
+        [st,  ct*ca, -ct*sa, a*st],
+        [0,     sa,    ca,    d ],
+        [0,      0,     0,    1 ],
+    ])
+
+# ตาราง DH ของแขน 3 DOF (ใช้ค่าจริงจากโปรเจกต์)
+dh = [
+    {"a": 0,   "alpha": np.deg2rad(-90), "d": 156.5, "theta": np.deg2rad(30)},
+    {"a": 135, "alpha": 0,               "d": 0,     "theta": np.deg2rad(45)},
+    {"a": 157, "alpha": 0,               "d": 0,     "theta": np.deg2rad(-20)},
+]
+
+T = np.eye(4)
+for joint in dh:
+    T = T @ dh_transform(**joint)
+
+print("ตำแหน่งปลายแขน (x, y, z):", T[:3, 3])</code></pre>
+      <div class="note tip"><span class="label">💡 ข้อดีของ DH:</span>
+      ไม่ต้องวาดรูปคิดเรขาคณิตทีละมุม — แค่ใส่ตาราง DH แล้วคูณเมทริกซ์
+      ใช้ได้กับแขน 3 แกนจนถึง 6 แกนอุตสาหกรรมเหมือนกัน และเป็นพื้นฐานของ ROS / MoveIt</div>
+      <div class="note info"><span class="label">ℹ️ เทียบกับตรีโกณมิติ:</span>
+      ตรีโกณมิติ (หัวข้อด้านบน) ง่ายและเห็นภาพชัด แต่ต้องคำนวณใหม่เมื่อโครงสร้างเปลี่ยน
+      ส่วน DH เป็น<b>ระบบมาตรฐาน</b>ที่อธิบายโครงสร้างด้วยตัวเลข → เหมาะกับแขนซับซ้อนและงานระดับมืออาชีพ</div>
+    </div>
   </section>
 
   <!-- ================= HARDWARE ================= -->
