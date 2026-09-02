@@ -1776,6 +1776,20 @@ for _ in range(500):
       RL ไม่ได้มาแทนที่ Kinematics — โดยทั่วไปยังใช้ IK กำหนดเป้าหมาย แล้วให้ RL เรียนรู้
       “การควบคุมละเอียด” (เช่น หนีบของนุ่ม, หลบสิ่งกีดขวาง) — ทั้งสองอย่างใช้คู่กันได้</div>
     </div>
+
+    <div class="card">
+      <h4>📘 การตั้งค่า PPO Policy สำหรับแขนกล 3DOF</h4>
+      <p>เจาะลึกการตั้งค่า PPO ที่สำคัญ — Actor–Critic, Runner, Algorithm, Observation/Action Space
+      และ Distillation — อธิบาย<b>ทีละพารามิเตอร์</b> พร้อมค่าที่แนะนำสำหรับแขนกลของเรา:</p>
+      <p style="font-size:.9rem;">ค่าที่แนะนำสำหรับแขนกล 3DOF (<code>terk_arm</code>):</p>
+      <pre><code>obs    = [θ1, θ2, θ3, gripper, target_x, target_y, target_z]   (7)
+action = [Δθ1, Δθ2, Δθ3, gripper]                                (4)
+actor_hidden_dims = [128, 64]   critic_hidden_dims = [128, 64]
+clip_param = 0.2   entropy_coef = 0.005   init_noise_std = 1.0</code></pre>
+      <div class="note tip"><span class="label">💡 ขั้นตอน:</span>
+      เทรน PPO ใน MuJoCo / Isaac Lab → distill เป็น student ขนาดเล็ก → export <code>policy.onnx</code>
+      → แปลงเป็น C → รันบน ESP32 → สั่งงานผสานกับ <code>/api/move</code> ที่มีอยู่แล้ว</div>
+    </div>
   </section>
 
   <!-- ================= BOM ================= -->
