@@ -357,7 +357,7 @@
     <div class="grid grid-2">
       <!-- Part 1 -->
       <div class="card">
-        <h4><span class="time-chip">ช่วงเช้า · ส่วนที่ 1</span>📐 การออกแบบด้วย Onshape (Cloud 3D CAD)</h4>
+        <h4><span class="time-chip">ช่วงเช้า · ส่วนที่ 1 · ⏱ 3.5 ชม.</span>📐 การออกแบบด้วย Onshape (Cloud 3D CAD)</h4>
         <ul>
           <li>สมัครบัญชีและทำความรู้จัก <b>UI เบื้องต้น</b> ของ Onshape (ฟรีสำหรับนักเรียน)</li>
           <li>เรียนรู้คำสั่งพื้นฐาน: <code>Sketch</code>, <code>Dimension</code>, <code>Extrude</code>, <code>Fillet</code>, <code>Hole</code></li>
@@ -393,7 +393,7 @@
 
       <!-- Part 2 -->
       <div class="card">
-        <h4><span class="time-chip">ช่วงเช้า · ส่วนที่ 2</span>🛒 นักจัดซื้อฮาร์ดแวร์ (Shopee Sourcing)</h4>
+        <h4><span class="time-chip">ช่วงบ่าย · ส่วนที่ 1 · ⏱ 1.5 ชม.</span>🛒 นักจัดซื้อฮาร์ดแวร์ (Shopee Sourcing)</h4>
         <ul>
           <li>เรียนรู้สเปกอุปกรณ์: <code>ESP32</code>, <code>PCA9685</code>, สเต็ปเปอร์มอเตอร์ <code>NEMA 17</code>, เซอร์โวมอเตอร์</li>
           <li>ทักษะการค้นหาอะไหล่บน Shopee: ใช้คำค้นที่ถูกต้อง, ดูรีวิว, เลือกร้านที่มีของจริง</li>
@@ -428,7 +428,7 @@
     </div>
 
     <div class="card">
-      <h4><span class="time-chip">ช่วงบ่าย</span>🖨 การผลิต (Slicing & 3D Printing) และเตรียมประกอบ</h4>
+      <h4><span class="time-chip">ช่วงบ่าย · ส่วนที่ 2 · ⏱ 1.5 ชม.</span>🖨 การผลิต (Slicing & 3D Printing)</h4>
       <div class="timeline">
         <div class="step">
           <h4>1. Export ไฟล์จาก Onshape</h4>
@@ -445,9 +445,9 @@
           (เปิดเฉพาะจุดที่ยื่นเกิน 45° ที่จำเป็น)</p>
         </div>
         <div class="step">
-          <h4>4. ระหว่างรอเครื่องพิมพ์ทำงาน → ประกอบชิ้นส่วนที่เตรียมสำรองไว้ (Pre-printed)</h4>
-          <p>เริ่มประกอบโครงสร้างหลักและ<b>เดินสายไฟ (Wiring)</b> ตามแผนภาพในหัวข้อ
-          <a href="#hardware">ฮาร์ดแวร์และการเดินสาย</a></p>
+          <h4>4. สั่งพิมพ์และตรวจชิ้นงาน</h4>
+          <p>เริ่มพิมพ์ชิ้นส่วนพร้อมตรวจคุณภาพ (Support หลุดง่ายไหม? ผิวเรียบไหม? รูน็อตพอดีไหม?)
+          — การประกอบ + เดินสายไฟจะทำต่อในช่วงเช้าของ<b>วันที่ 2</b> เมื่อชิ้นส่วนพิมพ์ครบ</p>
         </div>
       </div>
       <svg class="illus-sm" viewBox="0 0 300 250" role="img" aria-label="ภาพเครื่องพิมพ์ 3 มิติกำลังพิมพ์ Gripper">
@@ -652,12 +652,22 @@
 
     <div class="grid grid-2">
       <div class="card">
-        <h4><span class="time-chip">ช่วงเช้า</span>🔧 ประกอบชิ้นส่วนสุดท้าย & โลกของ GitHub</h4>
+        <h4><span class="time-chip">ช่วงเช้า · ส่วนที่ 1 · ⏱ 1.5 ชม.</span>🔧 ประกอบแขนกล + เดินสายไฟ</h4>
         <ul>
-          <li>นำชิ้นส่วน <b>Gripper ที่ออกแบบเองจาก Onshape</b> มาประกอบเข้ากับปลายแขนกล</li>
+          <li>นำชิ้นส่วนที่พิมพ์เสร็จจาก<b>เมื่อวาน</b> (Pre-printed + Gripper ของตัวเอง) มาประกอบโครงสร้างแขนกล 3 แกน</li>
+          <li>ติด<b>Gripper ที่ออกแบบเองจาก Onshape</b> เข้ากับปลายแขนกล (End-Effector)</li>
+          <li><b>เดินสายไฟ (Wiring)</b>: ESP32 → A4988 ×3 → NEMA 17 ×3 + Servo Gripper + แหล่งจ่ายไฟ
+          (ดูแผนภาพในหัวข้อ <a href="#hardware">ฮาร์ดแวร์และการเดินสาย</a>)</li>
+          <li>ตรวจสอบการเชื่อมต่อ: สาย STEP/DIR ถูกต้อง, ต่อ GND ร่วมกันทุกบอร์ด</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4><span class="time-chip">ช่วงเช้า · ส่วนที่ 2 · ⏱ 2 ชม.</span>🌐 โลกของ GitHub + ตั้งค่าโค้ด</h4>
+        <ul>
           <li>ทำความรู้จัก <b>GitHub</b>: การค้นหาโปรเจกต์หุ่นยนต์ การดาวน์โหลดโค้ด และการอ่าน <code>README.md</code></li>
           <li>ดาวน์โหลดโปรเจกต์ตัวอย่าง: <a href="https://github.com/terk182/terk_arm_esp32_v1" target="_blank" rel="noopener">terk182/terk_arm_esp32_v1</a></li>
-          <li>ติดตั้งไลบรารีที่จำเป็นสำหรับ ESP32 (ดูขั้นตอนในหัวข้อ <a href="#software">การติดตั้งซอฟต์แวร์</a>)</li>
+          <li>ติดตั้งไลบรารีที่จำเป็นสำหรับ ESP32 และ<b>อัปโหลดเฟิร์มแวร์</b> (ดูขั้นตอนในหัวข้อ <a href="#software">การติดตั้งซอฟต์แวร์</a>)</li>
+          <li>ทดสอบเปิดเครื่อง: เชื่อมต่อ Wi-Fi / AP แล้วเปิดหน้าเว็บควบคุม <code>http://[IP-ESP32]/</code></li>
         </ul>
         <svg class="illus-sm" viewBox="0 0 340 200" role="img" aria-label="ภาพการ์ดรีโป GitHub">
           <rect x="10" y="10" width="320" height="180" rx="12" fill="#0f172a"/>
@@ -684,41 +694,51 @@
         </svg>
         <p class="illus-caption">รูป: ตัวอย่างรีโปโปรเจกต์บน GitHub — ควรอ่าน README.md ก่อนเสมอ</p>
       </div>
-      <div class="card">
-        <h4><span class="time-chip">ช่วงบ่าย</span>🧮 ศาสตร์แห่งการเคลื่อนไหว (3DOF Kinematics)</h4>
-        <ul>
-          <li>ทำความเข้าใจ<b>จุดหมุน 3 แกน (3DOF)</b> และการแปลงมุมองศาข้อต่อให้เป็นพิกัด X, Y, Z</li>
-          <li><b>Forward Kinematics (FK):</b> มุมข้อต่อ → พิกัดปลายแขน</li>
-          <li><b>Inverse Kinematics (IK):</b> พิกัดปลายแขน → มุมข้อต่อ</li>
-          <li>นำโค้ดจาก GitHub มาปรับแก้ (Modify) เพื่อสั่งแขนกลไปยังพิกัดที่ต้องการ และเปิด–ปิด Gripper</li>
-          <li>ลองเล่นแบบจำลองในหัวข้อ <a href="#kinematics">Kinematics Simulator</a></li>
-        </ul>
-        <svg class="illus-sm" viewBox="0 0 300 260" role="img" aria-label="ภาพแกนพิกัดและแขนกล 3DOF">
-          <g stroke="#94a3b8" stroke-width="2" stroke-linecap="round">
-            <line x1="40" y1="220" x2="270" y2="220"/>
-            <line x1="40" y1="220" x2="40" y2="30"/>
-            <line x1="40" y1="220" x2="170" y2="248"/>
-          </g>
-          <g fill="#475569" font-size="12" font-weight="700">
-            <text x="266" y="214">X</text><text x="32" y="34">Y</text><text x="172" y="246">Z</text>
-          </g>
-          <g transform="translate(95,190)">
-            <rect x="-30" y="10" width="60" height="12" rx="4" fill="#a5b4fc"/>
-            <line x1="0" y1="10" x2="0" y2="-40" stroke="#6366f1" stroke-width="12" stroke-linecap="round"/>
-            <circle cx="0" cy="-40" r="9" fill="#8b5cf6"/>
-            <line x1="0" y1="-40" x2="60" y2="-70" stroke="#8b5cf6" stroke-width="11" stroke-linecap="round"/>
-            <circle cx="60" cy="-70" r="8" fill="#f59e0b"/>
-            <line x1="60" y1="-70" x2="70" y2="-95" stroke="#f59e0b" stroke-width="7" stroke-linecap="round"/>
-            <circle cx="70" cy="-95" r="6" fill="#ef4444"/>
-          </g>
-          <g stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3 3">
-            <line x1="165" y1="95" x2="150" y2="190"/>
-            <line x1="150" y1="190" x2="165" y2="190"/>
-          </g>
-          <text x="170" y="92" font-size="10" fill="#ef4444" font-weight="700">ปลายแขน (x,y,z)</text>
-        </svg>
-        <p class="illus-caption">รูป: แขนกล 3 ข้อต่อบนแกน X-Y-Z — เปลี่ยนมุม θ แล้วพิกัดปลายแขนเปลี่ยนตาม</p>
+    </div>
+
+    <div class="card">
+      <h4><span class="time-chip">ช่วงบ่าย · ⏱ 3 ชม.</span>🧮 ศาสตร์แห่งการเคลื่อนไหว (3DOF Kinematics)</h4>
+      <div class="timeline">
+        <div class="step">
+          <h4>1. ทฤษฎี (1 ชม.) — จุดหมุน 3 แกน และการแปลงมุม → พิกัด</h4>
+          <p><b>FK:</b> มุมข้อต่อ → พิกัดปลายแขน · <b>IK:</b> พิกัดปลายแขน → มุมข้อต่อ
+          (ดูสูตรและตัวอย่างในหัวข้อ <a href="#kinematics">Kinematics</a>)</p>
+        </div>
+        <div class="step">
+          <h4>2. ทดลองกับ Simulator (30 นาที)</h4>
+          <p>ลองเลื่อนมุม θ1–θ3 ดูตำแหน่งปลายแขน และกดคำนวณ IK ใน <a href="#kinematics">Kinematics Simulator</a></p>
+        </div>
+        <div class="step">
+          <h4>3. ปรับโค้ด + ทดสอบแขนจริง (1.5 ชม.)</h4>
+          <p>นำโค้ดจาก GitHub มาปรับแก้ (Modify) เพื่อสั่งแขนกลไปยังพิกัด X, Y, Z ที่ต้องการ
+          และทดสอบ<b>เปิด–ปิด Gripper</b> ที่ออกแบบเอง</p>
+        </div>
       </div>
+      <svg class="illus-sm" viewBox="0 0 300 260" role="img" aria-label="ภาพแกนพิกัดและแขนกล 3DOF">
+        <g stroke="#94a3b8" stroke-width="2" stroke-linecap="round">
+          <line x1="40" y1="220" x2="270" y2="220"/>
+          <line x1="40" y1="220" x2="40" y2="30"/>
+          <line x1="40" y1="220" x2="170" y2="248"/>
+        </g>
+        <g fill="#475569" font-size="12" font-weight="700">
+          <text x="266" y="214">X</text><text x="32" y="34">Y</text><text x="172" y="246">Z</text>
+        </g>
+        <g transform="translate(95,190)">
+          <rect x="-30" y="10" width="60" height="12" rx="4" fill="#a5b4fc"/>
+          <line x1="0" y1="10" x2="0" y2="-40" stroke="#6366f1" stroke-width="12" stroke-linecap="round"/>
+          <circle cx="0" cy="-40" r="9" fill="#8b5cf6"/>
+          <line x1="0" y1="-40" x2="60" y2="-70" stroke="#8b5cf6" stroke-width="11" stroke-linecap="round"/>
+          <circle cx="60" cy="-70" r="8" fill="#f59e0b"/>
+          <line x1="60" y1="-70" x2="70" y2="-95" stroke="#f59e0b" stroke-width="7" stroke-linecap="round"/>
+          <circle cx="70" cy="-95" r="6" fill="#ef4444"/>
+        </g>
+        <g stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3 3">
+          <line x1="165" y1="95" x2="150" y2="190"/>
+          <line x1="150" y1="190" x2="165" y2="190"/>
+        </g>
+        <text x="170" y="92" font-size="10" fill="#ef4444" font-weight="700">ปลายแขน (x,y,z)</text>
+      </svg>
+      <p class="illus-caption">รูป: แขนกล 3 ข้อต่อบนแกน X-Y-Z — เปลี่ยนมุม θ แล้วพิกัดปลายแขนเปลี่ยนตาม</p>
     </div>
   </section>
 
@@ -736,12 +756,12 @@
 
     <div class="grid grid-2">
       <div class="card">
-        <h4><span class="time-chip">ช่วงเช้า</span>🧠 ติดตั้งสมองกลด้วย Local LLM</h4>
+        <h4><span class="time-chip">ช่วงเช้า · ⏱ 3 ชม.</span>🧠 ติดตั้งสมองกลด้วย Local LLM</h4>
         <ul>
           <li>แนวทางการรันโมเดล AI แบบ <b>Local ออฟไลน์</b> ด้วย <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a></li>
           <li>ทดลองใช้โมเดลภาษา เช่น <b>Typhoon, Qwen หรือ Gemma</b> เพื่อตีความคำสั่งภาษามนุษย์</li>
           <li>เชื่อมต่อข้อมูลผ่านเครือข่าย <b>Wi-Fi</b> ระหว่าง AI บนคอมพิวเตอร์กับบอร์ด ESP32 เพื่อให้แขนกลทำงานตามคำสั่ง</li>
-          <li>ดูตัวอย่างโค้ดเชื่อมต่อในหัวข้อ <a href="#ai">AI → แขนกล</a></li>
+          <li>ต่อยอด: ให้แขนกล<b>มองเห็น</b>ด้วย VLM (กล้อง + qwen3-vl) — ดูหัวข้อ <a href="#ai">AI → แขนกล</a></li>
         </ul>
         <svg class="illus-sm" viewBox="0 0 200 170" role="img" aria-label="ภาพสมองกล AI">
           <path d="M100 24 C68 24 52 50 58 76 C42 84 42 108 58 116 C58 144 80 154 100 148 C120 154 142 144 142 116 C158 108 158 84 142 76 C148 50 132 24 100 24 Z" fill="#eef0ff" stroke="#6366f1" stroke-width="3"/>
@@ -756,7 +776,7 @@
         <p class="illus-caption">รูป: สมองกล AI — ตีความภาษามนุษย์แล้วสั่งงานแขนกลผ่าน Wi-Fi</p>
       </div>
       <div class="card">
-        <h4><span class="time-chip">ช่วงบ่าย</span>🏆 Mini-Hackathon “AI Pick & Place”</h4>
+        <h4><span class="time-chip">ช่วงบ่าย · ⏱ 3.5 ชม.</span>🏆 Mini-Hackathon “AI Pick & Place”</h4>
         <ul>
           <li><b>โจทย์ท้าทาย:</b> ใช้ AI รับคำสั่งข้อความ (เช่น “หยิบกระป๋องสีแดงไปทิ้ง”) แปลงเป็นพิกัด
           แล้วให้แขนกลที่ติด Gripper ของตัวเองไปคีบชิ้นงาน</li>
