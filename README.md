@@ -41,3 +41,6 @@
 - โปรเจกต์เฟิร์มแวร์: [terk182/terk_arm_esp32_v1](https://github.com/terk182/terk_arm_esp32_v1)
 - Onshape: https://www.onshape.com
 - Ollama: https://ollama.com
+
+
+https://drive.google.com/file/d/19k6SGkwrS2IbOynz8zSLyGltD5AC35zk/view?usp=sharing
